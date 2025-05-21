@@ -1,6 +1,6 @@
 import asyncio
 from asyncio import Task
-from typing import Dict, Any, Callable, Optional, List
+from typing import Dict, Any, Callable, List
 
 
 class AttackWorker:
