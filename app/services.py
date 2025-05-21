@@ -1,4 +1,4 @@
-from typing import Set, Dict, Union
+from typing import Set, Dict, Callable, Any, Union
 from collections import defaultdict
 from threading import Lock
 from models import CloudEnvironment, ValidationError
@@ -50,7 +50,7 @@ class AttackSurfaceAnalyzer:
                 attackers.update(self.dest_tag_to_attacker_ids.get(tag, set()))
             self.dest_vm_id_to_attacker_ids[vm_id] = attackers
 
-    def get_attackers(self, vm_id: str) -> Set[str]:
+    async def get_attackers(self, vm_id: str) -> Set[str]:
         """Return the set of VM IDs that can attack the given VM."""
         if vm_id not in self.vm_id_to_tags:
             raise HTTPException(status_code=404, detail="VM not found")

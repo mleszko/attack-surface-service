@@ -23,7 +23,7 @@ class AttackWorker:
             vm_id: str = item["vm_id"]
             responder: Callable[[Dict[str, Any], int], Any] = item["responder"]
             try:
-                attackers = self.analyzer.get_attackers(vm_id)
+                attackers = await self.analyzer.get_attackers(vm_id)
                 await responder({"attackers": list(attackers)}, 200)
             except ValueError as e:
                 await responder({"error": str(e)}, 404)
