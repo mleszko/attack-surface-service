@@ -7,7 +7,7 @@ class AttackSurfaceAnalyzer:
     """Analyzes the attack surface of a VM based on tags and firewall rules."""
 
     def __init__(self) -> None:
-        self.vm_id_to_tags: Dict[str, Set[str]] = {}
+        self.vm_id_to_tags: Dict[str, frozenset[str]] = {}
         self.tag_to_vm_ids: Dict[str, Set[str]] = defaultdict(set)
         self.dest_tag_to_attacker_ids: Dict[str, Set[str]] = defaultdict(set)
 
@@ -18,8 +18,9 @@ class AttackSurfaceAnalyzer:
         self.dest_tag_to_attacker_ids.clear()
 
         for vm in env.vms:
-            self.vm_id_to_tags[vm.vm_id] = set(vm.tags)
-            for tag in vm.tags:
+            tags = frozenset(vm.tags)
+            self.vm_id_to_tags[vm.vm_id] = tags
+            for tag in tags:
                 self.tag_to_vm_ids[tag].add(vm.vm_id)
 
         for rule in env.fw_rules:
