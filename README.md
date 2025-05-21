@@ -1,5 +1,7 @@
 # Attack Surface Service
 
+🔗 **Repository:** [github.com/mleszko/attack-surface-service](https://github.com/mleszko/attack-surface-service)
+
 ## 📌 Description
 This is a Python-based REST API service built for the hiring exercise. It identifies the potential attack surface of a virtual machine (VM) in a cloud environment described by firewall rules and VM tags.
 
