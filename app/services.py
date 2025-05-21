@@ -1,7 +1,7 @@
 from typing import Set, Dict, Callable, Any, Union
 from collections import defaultdict
 from threading import Lock
-from models import CloudEnvironment
+from models import CloudEnvironment, ValidationError
 
 class AttackSurfaceAnalyzer:
     """Analyzes the attack surface of a VM based on tags and firewall rules."""
@@ -19,13 +19,26 @@ class AttackSurfaceAnalyzer:
         self.dest_tag_to_attacker_ids.clear()
         self.dest_vm_id_to_attacker_ids.clear()
 
+        seen_vm_ids: Set[str] = set()
+
         for vm in env.vms:
+            if not vm.vm_id or vm.vm_id in seen_vm_ids:
+                raise ValidationError(f"Duplicate or missing vm_id: {vm.vm_id}")
+            seen_vm_ids.add(vm.vm_id)
+
+            if len(vm.name) > 64:
+                raise ValidationError(f"VM name too long: {vm.name}")
+            if any(len(tag) > 64 for tag in vm.tags):
+                raise ValidationError(f"Tag too long in VM {vm.vm_id}")
+
             tags = frozenset(vm.tags)
             self.vm_id_to_tags[vm.vm_id] = tags
             for tag in tags:
                 self.tag_to_vm_ids[tag].add(vm.vm_id)
 
         for rule in env.fw_rules:
+            if not rule.source_tag or not rule.dest_tag:
+                continue  # skip invalid rule
             source_ids = self.tag_to_vm_ids.get(rule.source_tag, set())
             self.dest_tag_to_attacker_ids[rule.dest_tag].update(source_ids)
 

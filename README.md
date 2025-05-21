@@ -137,10 +137,10 @@ These are not included to keep the core project focused and lightweight but refl
 This project was designed with automated benchmarking and robustness tests in mind. Below are deliberate improvements and verifications made to optimize reliability and speed:
 
 ### 🔐 Input Validation
-- [ ] Reject duplicated `vm_id` entries
-- [ ] Skip firewall rules with empty `source_tag` or `dest_tag`
-- [ ] Sanitize `/attack?vm_id=` against empty, missing, or overly long values
-- [ ] Limit max length of VM `name` and `tag` fields (e.g., 64 chars)
+- [x] Reject duplicated `vm_id` entries
+- [x] Skip firewall rules with empty `source_tag` or `dest_tag`
+- [x] Sanitize `/attack?vm_id=` against empty, missing, or overly long values
+- [x] Limit max length of VM `name` and `tag` fields (e.g., 64 chars)
 
 ### 🚦 Error Handling
 - [x] Return `404` for non-existent VMs
