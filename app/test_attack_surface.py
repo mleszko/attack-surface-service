@@ -1,4 +1,5 @@
 import pytest
+from fastapi import HTTPException
 from models import VirtualMachine, FirewallRule, CloudEnvironment
 from services import AttackSurfaceAnalyzer
 
@@ -15,23 +16,31 @@ def sample_env():
     ]
     return CloudEnvironment(vms=vms, fw_rules=rules)
 
-def test_attackers_for_vm_b(sample_env):
+@pytest.mark.asyncio
+async def test_attackers_for_vm_b(sample_env):
     analyzer = AttackSurfaceAnalyzer()
     analyzer.load_environment(sample_env)
-    assert analyzer.get_attackers("vm-b") == {"vm-a"}
+    result = await analyzer.get_attackers("vm-b")
+    assert result == {"vm-a"}
 
-def test_attackers_for_vm_a(sample_env):
+@pytest.mark.asyncio
+async def test_attackers_for_vm_a(sample_env):
     analyzer = AttackSurfaceAnalyzer()
     analyzer.load_environment(sample_env)
-    assert analyzer.get_attackers("vm-a") == {"vm-c"}
+    result = await analyzer.get_attackers("vm-a")
+    assert result == {"vm-c"}
 
-def test_no_attackers(sample_env):
+@pytest.mark.asyncio
+async def test_no_attackers(sample_env):
     analyzer = AttackSurfaceAnalyzer()
     analyzer.load_environment(sample_env)
-    assert analyzer.get_attackers("vm-c") == set()
+    result = await analyzer.get_attackers("vm-c")
+    assert result == set()
 
-def test_vm_not_found(sample_env):
+@pytest.mark.asyncio
+async def test_vm_not_found(sample_env):
     analyzer = AttackSurfaceAnalyzer()
     analyzer.load_environment(sample_env)
-    with pytest.raises(ValueError):
-        analyzer.get_attackers("vm-unknown")
+    with pytest.raises(HTTPException) as exc:
+        await analyzer.get_attackers("vm-unknown")
+    assert exc.value.status_code == 404
