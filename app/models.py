@@ -2,27 +2,32 @@ from typing import List, Dict
 from dataclasses import dataclass
 
 class ValidationError(Exception):
+    """Raised when the cloud environment input data is invalid."""
     pass
 
 @dataclass
 class VirtualMachine:
+    """Represents a virtual machine in the cloud environment."""
     vm_id: str
     name: str
     tags: List[str]
 
 @dataclass
 class FirewallRule:
+    """Represents a firewall rule allowing traffic from one tag to another."""
     fw_id: str
     source_tag: str
     dest_tag: str
 
 @dataclass
 class CloudEnvironment:
+    """Holds the entire cloud environment configuration, including VMs and firewall rules."""
     vms: List[VirtualMachine]
     fw_rules: List[FirewallRule]
 
     @staticmethod
     def from_dict(data: Dict) -> 'CloudEnvironment':
+        """Parses a dictionary into a CloudEnvironment instance with validation."""
         if "vms" not in data or "fw_rules" not in data:
             raise ValidationError("Missing 'vms' or 'fw_rules' in environment data")
 

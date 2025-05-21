@@ -29,6 +29,7 @@ stats = StatsTracker()
 
 @app.on_event("startup")
 def startup_event():
+    """Load the cloud environment JSON file and initialize services on startup."""
     path = os.environ.get("ENV_PATH")
     if not path:
         logging.error("Missing ENV_PATH environment variable")
@@ -52,6 +53,7 @@ def startup_event():
 
 @app.middleware("http")
 async def track_request_time(request: Request, call_next):
+    """Middleware to measure and log the duration of each HTTP request."""
     start_time = time.perf_counter()
     response = await call_next(request)
     duration = time.perf_counter() - start_time
@@ -61,6 +63,7 @@ async def track_request_time(request: Request, call_next):
 
 @app.get("/api/v1/attack")
 def get_attack(vm_id: str = Query(...)):
+    """Return the list of VM IDs that can potentially attack the specified VM."""
     try:
         result = analyzer.get_attackers(vm_id)
         logging.info(f"Attack surface requested for {vm_id}: {result}")
@@ -71,6 +74,7 @@ def get_attack(vm_id: str = Query(...)):
 
 @app.get("/api/v1/stats")
 def get_stats():
+    """Return statistics about the number of VMs, total requests, and average request time."""
     result = stats.get_stats(analyzer.vm_count())
     logging.info("Stats endpoint called")
     return result
