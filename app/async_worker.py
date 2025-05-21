@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, Callable, Any
+from typing import Callable, Any
 
 class AttackWorker:
     """Asynchronous worker that handles incoming attack requests from a queue."""
