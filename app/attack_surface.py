@@ -5,8 +5,6 @@ import sys
 import logging
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.responses import JSONResponse
-from threading import Lock
-from typing import Set
 
 from models import CloudEnvironment, ValidationError
 from services import AttackSurfaceAnalyzer, StatsTracker
