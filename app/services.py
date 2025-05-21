@@ -2,6 +2,7 @@ from typing import Set, Dict, Callable, Any, Union
 from collections import defaultdict
 from threading import Lock
 from models import CloudEnvironment, ValidationError
+from fastapi import HTTPException  # added to catch and raise HTTP 404
 
 class AttackSurfaceAnalyzer:
     """Analyzes the attack surface of a VM based on tags and firewall rules."""
@@ -52,7 +53,7 @@ class AttackSurfaceAnalyzer:
     def get_attackers(self, vm_id: str) -> Set[str]:
         """Return the set of VM IDs that can attack the given VM."""
         if vm_id not in self.vm_id_to_tags:
-            raise ValueError("VM not found")
+            raise HTTPException(status_code=404, detail="VM not found")
 
         attackers = self.dest_vm_id_to_attacker_ids.get(vm_id, set()).copy()
         attackers.discard(vm_id)
