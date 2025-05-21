@@ -5,6 +5,18 @@
 ## 📌 Description
 This is a Python-based REST API service built for the hiring exercise. It identifies the potential attack surface of a virtual machine (VM) in a cloud environment described by firewall rules and VM tags.
 
+## 🤖 Collaboration & Development Note
+
+This project was implemented using a mix of senior-level software engineering experience and AI-assisted support (ChatGPT), with an emphasis on:
+
+- Clean, modular architecture
+- Test-driven design
+- Type and lint-safe code (CI with `pytest`, `mypy`, `ruff`)
+- Defensive programming and input validation
+- Developer experience (documentation, logging, usability)
+
+AI support was used to boost productivity and clarity — not to replace design ownership or code quality thinking.
+
 ## 🚀 How to Run (Linux)
 
 ### 1. Requirements
@@ -97,6 +109,17 @@ curl 'http://localhost/api/v1/attack?vm_id=notfound' # Expect 404
 - The environment JSON file must be provided via the `ENV_PATH` environment variable.
 - Service tracks request counts and average processing time for all endpoints.
 - Application is structured in modular components with unit test coverage.
+
+## 🛠️ Future Ideas & Extensions
+This service was designed to be lightweight yet extendable. Potential improvements and directions include:
+
+- **MySQL integration:** Store environment and query logs for long-term analysis.
+- **Azure deployment:** Create a `deploy/azure` branch with templates for Azure App Service or Azure Container Apps.
+- **AI prediction:** Use attack request patterns to predict likely future attack targets using basic ML.
+- **Linux-level visibility:** Add a companion script or systemd service to monitor system-level traffic or resource usage.
+- **Docker & Kubernetes:** Add `Dockerfile` and optional `Helm` chart for containerized deployments.
+
+These are not included to keep the core project focused and lightweight but reflect a broader mindset toward real-world scalability and creativity.
 
 ---
 Hiring Exercise
