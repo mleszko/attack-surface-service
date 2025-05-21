@@ -1,0 +1,4 @@
+# PyCharm IDE files
+.idea/workspace.xml
+.idea/misc.xml
+*.iml
