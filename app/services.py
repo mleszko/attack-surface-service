@@ -1,4 +1,4 @@
-from typing import Set, Dict, Callable, Any
+from typing import Set, Dict, Callable, Any, Union
 from collections import defaultdict
 from threading import Lock
 from models import CloudEnvironment
@@ -59,7 +59,7 @@ class StatsTracker:
             self.request_count += 1
             self.total_time += duration
 
-    def get_stats(self, vm_count: int) -> Dict[str, float | int]:
+    def get_stats(self, vm_count: int) -> Dict[str, Union[float, int]]:
         """Return statistics including VM count, request count, and average request time."""
         with self.lock:
             avg_time = self.total_time / self.request_count if self.request_count else 0.0
