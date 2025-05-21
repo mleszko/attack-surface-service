@@ -9,13 +9,13 @@ class AttackSurfaceAnalyzer:
     def __init__(self) -> None:
         self.vm_id_to_tags: Dict[str, Set[str]] = {}
         self.tag_to_vm_ids: Dict[str, Set[str]] = defaultdict(set)
-        self.dest_tag_to_source_tags: Dict[str, Set[str]] = defaultdict(set)
+        self.dest_tag_to_attacker_ids: Dict[str, Set[str]] = defaultdict(set)
 
     def load_environment(self, env: CloudEnvironment) -> None:
         """Load and preprocess VM and firewall rule relationships from environment."""
         self.vm_id_to_tags.clear()
         self.tag_to_vm_ids.clear()
-        self.dest_tag_to_source_tags.clear()
+        self.dest_tag_to_attacker_ids.clear()
 
         for vm in env.vms:
             self.vm_id_to_tags[vm.vm_id] = set(vm.tags)
@@ -23,7 +23,8 @@ class AttackSurfaceAnalyzer:
                 self.tag_to_vm_ids[tag].add(vm.vm_id)
 
         for rule in env.fw_rules:
-            self.dest_tag_to_source_tags[rule.dest_tag].add(rule.source_tag)
+            source_ids = self.tag_to_vm_ids.get(rule.source_tag, set())
+            self.dest_tag_to_attacker_ids[rule.dest_tag].update(source_ids)
 
     def get_attackers(self, vm_id: str) -> Set[str]:
         """Return the set of VM IDs that can attack the given VM."""
@@ -34,9 +35,7 @@ class AttackSurfaceAnalyzer:
         attackers = set()
 
         for dest_tag in target_tags:
-            source_tags = self.dest_tag_to_source_tags.get(dest_tag, set())
-            for src_tag in source_tags:
-                attackers.update(self.tag_to_vm_ids.get(src_tag, set()))
+            attackers.update(self.dest_tag_to_attacker_ids.get(dest_tag, set()))
 
         attackers.discard(vm_id)
         return attackers
