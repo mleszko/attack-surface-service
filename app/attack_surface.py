@@ -3,6 +3,8 @@ import time
 import os
 import sys
 import logging
+import asyncio
+from typing import Any, Callable
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.responses import JSONResponse
 
@@ -28,7 +30,7 @@ stats = StatsTracker()
 worker = AttackWorker(analyzer)
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     """Load the cloud environment JSON file and initialize services on startup."""
     path = os.environ.get("ENV_PATH")
     if not path:
@@ -53,7 +55,7 @@ async def startup_event():
         sys.exit(1)
 
 @app.middleware("http")
-async def track_request_time(request: Request, call_next):
+async def track_request_time(request: Request, call_next: Callable) -> JSONResponse:
     """Middleware to measure and log the duration of each HTTP request."""
     start_time = time.perf_counter()
     response = await call_next(request)
@@ -63,14 +65,11 @@ async def track_request_time(request: Request, call_next):
     return response
 
 @app.get("/api/v1/attack")
-async def get_attack(vm_id: str = Query(...)):
+async def get_attack(vm_id: str = Query(...)) -> JSONResponse:
     """Queue the attack surface request to be processed asynchronously."""
-    async def responder(payload, status=200):
-        raise HTTPException(status_code=status, detail=payload.get("error") or payload)
+    result: dict[str, Any] = {}
 
-    result = {}
-
-    async def capture_result(payload, status=200):
+    async def capture_result(payload: dict[str, Any], status: int = 200) -> None:
         nonlocal result
         result = payload
         if status != 200:
@@ -80,7 +79,7 @@ async def get_attack(vm_id: str = Query(...)):
     return JSONResponse(result)
 
 @app.get("/api/v1/stats")
-def get_stats():
+def get_stats() -> dict[str, Any]:
     """Return statistics about the number of VMs, total requests, and average request time."""
     result = stats.get_stats(analyzer.vm_count())
     logging.info("Stats endpoint called")

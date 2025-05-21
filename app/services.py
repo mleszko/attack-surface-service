@@ -1,4 +1,4 @@
-from typing import Set, Dict
+from typing import Set, Dict, Callable, Any
 from collections import defaultdict
 from threading import Lock
 from models import CloudEnvironment
@@ -6,13 +6,12 @@ from models import CloudEnvironment
 class AttackSurfaceAnalyzer:
     """Analyzes the attack surface of a VM based on tags and firewall rules."""
 
-    def __init__(self):
-        """Initialize internal tag-VM and rule mappings."""
+    def __init__(self) -> None:
         self.vm_id_to_tags: Dict[str, Set[str]] = {}
         self.tag_to_vm_ids: Dict[str, Set[str]] = defaultdict(set)
         self.dest_tag_to_source_tags: Dict[str, Set[str]] = defaultdict(set)
 
-    def load_environment(self, env: CloudEnvironment):
+    def load_environment(self, env: CloudEnvironment) -> None:
         """Load and preprocess VM and firewall rule relationships from environment."""
         self.vm_id_to_tags.clear()
         self.tag_to_vm_ids.clear()
@@ -49,19 +48,18 @@ class AttackSurfaceAnalyzer:
 class StatsTracker:
     """Tracks API request statistics: count and average processing time."""
 
-    def __init__(self):
-        """Initialize counters and a thread-safe lock for stats tracking."""
-        self.request_count = 0
-        self.total_time = 0.0
-        self.lock = Lock()
+    def __init__(self) -> None:
+        self.request_count: int = 0
+        self.total_time: float = 0.0
+        self.lock: Lock = Lock()
 
-    def record_request(self, duration: float):
+    def record_request(self, duration: float) -> None:
         """Record the duration of a handled HTTP request."""
         with self.lock:
             self.request_count += 1
             self.total_time += duration
 
-    def get_stats(self, vm_count: int):
+    def get_stats(self, vm_count: int) -> Dict[str, float | int]:
         """Return statistics including VM count, request count, and average request time."""
         with self.lock:
             avg_time = self.total_time / self.request_count if self.request_count else 0.0
