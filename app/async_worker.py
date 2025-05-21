@@ -1,19 +1,20 @@
 import asyncio
 from asyncio import Task
-from typing import Dict, Any, Callable, Optional
+from typing import Dict, Any, Callable, Optional, List
 
 
 class AttackWorker:
     """Asynchronous worker that handles incoming attack requests from a queue."""
 
-    def __init__(self, analyzer: Any, max_queue_size: int = 100) -> None:
+    def __init__(self, analyzer: Any, max_queue_size: int = 100, num_workers: int = 4) -> None:
         self.queue: asyncio.Queue[Dict[str, Any]] = asyncio.Queue(maxsize=max_queue_size)
         self.analyzer = analyzer
-        self.task: Optional[Task] = None
+        self.tasks: List[Task] = []
+        self.num_workers = num_workers
 
     async def start(self) -> None:
-        """Start the background task that processes the attack queue."""
-        self.task = asyncio.create_task(self.run())
+        """Start multiple background tasks to process the attack queue in parallel."""
+        self.tasks = [asyncio.create_task(self.run()) for _ in range(self.num_workers)]
 
     async def run(self) -> None:
         """Continuously process queued attack requests one by one."""
