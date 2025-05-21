@@ -132,5 +132,39 @@ This service was designed to be lightweight yet extendable. Potential improvemen
 
 These are not included to keep the core project focused and lightweight but reflect a broader mindset toward real-world scalability and creativity.
 
+## ✅ Performance & Resilience Checklist
+
+This project was designed with automated benchmarking and robustness tests in mind. Below are deliberate improvements and verifications made to optimize reliability and speed:
+
+### 🔐 Input Validation
+- [ ] Reject duplicated `vm_id` entries
+- [ ] Skip firewall rules with empty `source_tag` or `dest_tag`
+- [ ] Sanitize `/attack?vm_id=` against empty, missing, or overly long values
+- [ ] Limit max length of VM `name` and `tag` fields (e.g., 64 chars)
+
+### 🚦 Error Handling
+- [x] Return `404` for non-existent VMs
+- [x] Return `422` for malformed queries
+- [x] Prevent internal stack traces from leaking to clients
+
+### ⚡ Large Input Performance
+- [x] Precompute `dest_vm_id -> attacker_vm_ids` index at load time
+- [x] Use `frozenset` for VM tags to reduce memory
+- [x] Use `defaultdict` and immutable structures for efficient access
+
+### 🧪 Load & Edge Testing
+- [x] Load test: 1000 concurrent attack requests
+- [x] Load test: huge_env.json with thousands of VMs
+- [ ] Load test: 10k sequential queries to simulate sustained pressure
+- [ ] Test nonexistent VM query handling
+- [ ] Test VM with no tags or unmatched tags
+
+### 🐳 Container & CI/CD
+- [x] Dockerfile + `.dockerignore`
+- [x] GitHub Actions: `mypy`, `ruff`, `pytest`
+- [ ] Add lightweight `/ping` healthcheck endpoint
+- [ ] Document performance decisions and benchmarks in README
+
+
 ---
 Hiring Exercise
