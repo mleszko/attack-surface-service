@@ -10,12 +10,14 @@ class AttackSurfaceAnalyzer:
         self.vm_id_to_tags: Dict[str, frozenset[str]] = {}
         self.tag_to_vm_ids: Dict[str, Set[str]] = defaultdict(set)
         self.dest_tag_to_attacker_ids: Dict[str, Set[str]] = defaultdict(set)
+        self.dest_vm_id_to_attacker_ids: Dict[str, Set[str]] = defaultdict(set)
 
     def load_environment(self, env: CloudEnvironment) -> None:
         """Load and preprocess VM and firewall rule relationships from environment."""
         self.vm_id_to_tags.clear()
         self.tag_to_vm_ids.clear()
         self.dest_tag_to_attacker_ids.clear()
+        self.dest_vm_id_to_attacker_ids.clear()
 
         for vm in env.vms:
             tags = frozenset(vm.tags)
@@ -27,17 +29,19 @@ class AttackSurfaceAnalyzer:
             source_ids = self.tag_to_vm_ids.get(rule.source_tag, set())
             self.dest_tag_to_attacker_ids[rule.dest_tag].update(source_ids)
 
+        # Build dest_vm_id -> attacker_vm_ids index
+        for vm_id, tags in self.vm_id_to_tags.items():
+            attackers = set()
+            for tag in tags:
+                attackers.update(self.dest_tag_to_attacker_ids.get(tag, set()))
+            self.dest_vm_id_to_attacker_ids[vm_id] = attackers
+
     def get_attackers(self, vm_id: str) -> Set[str]:
         """Return the set of VM IDs that can attack the given VM."""
         if vm_id not in self.vm_id_to_tags:
             raise ValueError("VM not found")
 
-        target_tags = self.vm_id_to_tags[vm_id]
-        attackers = set()
-
-        for dest_tag in target_tags:
-            attackers.update(self.dest_tag_to_attacker_ids.get(dest_tag, set()))
-
+        attackers = self.dest_vm_id_to_attacker_ids.get(vm_id, set()).copy()
         attackers.discard(vm_id)
         return attackers
 
