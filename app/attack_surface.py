@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 from models import CloudEnvironment, ValidationError
 from services import AttackSurfaceAnalyzer, StatsTracker
+from async_worker import AttackWorker
 
 # Configure logging
 logging.basicConfig(
@@ -24,9 +25,10 @@ app = FastAPI()
 # Global services
 analyzer = AttackSurfaceAnalyzer()
 stats = StatsTracker()
+worker = AttackWorker(analyzer)
 
 @app.on_event("startup")
-def startup_event():
+async def startup_event():
     """Load the cloud environment JSON file and initialize services on startup."""
     path = os.environ.get("ENV_PATH")
     if not path:
@@ -38,6 +40,7 @@ def startup_event():
             data = json.load(f)
         env = CloudEnvironment.from_dict(data)
         analyzer.load_environment(env)
+        await worker.start()
         logging.info(f"Loaded environment from {path} with {len(env.vms)} VMs and {len(env.fw_rules)} rules")
     except FileNotFoundError:
         logging.exception(f"File not found: {path}")
@@ -60,15 +63,21 @@ async def track_request_time(request: Request, call_next):
     return response
 
 @app.get("/api/v1/attack")
-def get_attack(vm_id: str = Query(...)):
-    """Return the list of VM IDs that can potentially attack the specified VM."""
-    try:
-        result = analyzer.get_attackers(vm_id)
-        logging.info(f"Attack surface requested for {vm_id}: {result}")
-        return JSONResponse(list(result))
-    except ValueError as e:
-        logging.warning(f"Attack query failed for {vm_id}: {e}")
-        raise HTTPException(status_code=404, detail=str(e))
+async def get_attack(vm_id: str = Query(...)):
+    """Queue the attack surface request to be processed asynchronously."""
+    async def responder(payload, status=200):
+        raise HTTPException(status_code=status, detail=payload.get("error") or payload)
+
+    result = {}
+
+    async def capture_result(payload, status=200):
+        nonlocal result
+        result = payload
+        if status != 200:
+            raise HTTPException(status_code=status, detail=payload.get("error") or payload)
+
+    await worker.submit(vm_id, capture_result)
+    return JSONResponse(result)
 
 @app.get("/api/v1/stats")
 def get_stats():

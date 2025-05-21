@@ -101,6 +101,17 @@ You can also test edge cases:
 curl 'http://localhost/api/v1/attack?vm_id=notfound' # Expect 404
 ```
 
+## 🌀 Request Queueing & Backpressure
+
+To ensure the service remains responsive under high load, the `/api/v1/attack` endpoint uses an internal `asyncio.Queue` managed by a background worker.
+
+- Each incoming request is placed in a bounded queue (default `maxsize=100`)
+- A background task (`AttackWorker`) handles requests asynchronously, one at a time
+- If the queue is full or a timeout occurs, the client receives a `429 Too Many Requests` response
+- This mechanism provides backpressure control and protects the event loop from overload
+
+This approach demonstrates real-world concurrency handling, resource management, and performance-awareness — without changing the public API interface.
+
 ## ✅ Notes
 - All VMs and firewall rules are loaded once at startup.
 - Firewall rules are **not transitive**.
