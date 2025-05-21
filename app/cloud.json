@@ -1,0 +1,11 @@
+{
+  "vms": [
+    {"vm_id": "vm-a", "name": "web-server", "tags": ["web"]},
+    {"vm_id": "vm-b", "name": "db-server", "tags": ["db"]},
+    {"vm_id": "vm-c", "name": "admin", "tags": ["admin"]}
+  ],
+  "fw_rules": [
+    {"fw_id": "fw-1", "source_tag": "web", "dest_tag": "db"},
+    {"fw_id": "fw-2", "source_tag": "admin", "dest_tag": "web"}
+  ]
+}
