@@ -64,7 +64,7 @@ async def track_request_time(request: Request, call_next: Callable) -> JSONRespo
     return response
 
 @app.get("/api/v1/attack")
-async def get_attack(vm_id: str = Query(...)) -> JSONResponse:
+async def get_attack(vm_id: str = Query(..., min_length=1, max_length=64)) -> JSONResponse:
     """Queue the attack surface request to be processed asynchronously."""
     result: dict[str, Any] = {}
 
