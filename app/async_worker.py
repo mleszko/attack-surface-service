@@ -1,6 +1,6 @@
 import asyncio
 from asyncio import Task
-from typing import Dict, Any, Callable, List
+from typing import Dict, Any, Callable, List, Union
 
 
 class AttackWorker:
@@ -21,7 +21,7 @@ class AttackWorker:
         while True:
             item = await self.queue.get()
             vm_id: str = item["vm_id"]
-            responder: Callable[[Dict[str, Any], int], Any] = item["responder"]
+            responder: Callable[[Union[Dict[str, Any], List[str]], int], Any] = item["responder"]
             try:
                 attackers = await self.analyzer.get_attackers(vm_id)
                 await responder(list(attackers), 200)
