@@ -1,6 +1,6 @@
 .PHONY: run test lint format typecheck build clean
 
-ENV_PATH ?= ./cloud.json
+ENV_PATH ?= ./tests/cloud.json
 
 run:
 	ENV_PATH=$(ENV_PATH) uvicorn attack_surface:app --host 0.0.0.0 --port 80

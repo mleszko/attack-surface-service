@@ -30,7 +30,7 @@ pip install -r requirements.txt
 
 ### 3. Set environment variable and start the service
 ```bash
-export ENV_PATH=cloud.json
+export ENV_PATH=tests/cloud.json
 uvicorn main:app --host 0.0.0.0 --port 80
 ```
 
@@ -39,14 +39,27 @@ Make sure `cloud.json` is in the same directory.
 ## 📂 Project Structure
 ```
 .
-├─── app 
-    ├──main.py              # FastAPI entry point
-    ├── models.py            # Data models (VM, FirewallRule)
-    ├── services.py          # Core logic and statistics
-    ├── test_attack_surface.py  # Unit tests using pytest
-    ├── cloud.json           # Example environment file
-├── requirements.txt     # Dependencies
-└── README.md            # Documentation
+📁 attack-surface-service/
+├── app/
+|   ├── tests/
+│   │   │   ├── cloud.json                 # Example environment file
+│   │   │   ├── test_attack_surface.py     # Unit tests (sync)
+│   │   │   ├── test_attack_surface_async.py  # Unit tests (async)
+│   │   │   └── test_integration_load.py   # Load test for 1000 requests    
+│   ├── attack_surface.py          # FastAPI entry point
+│   ├── models.py                  # Data models (VM, FirewallRule)
+│   ├── services.py                # Core logic and statistics
+│   ├── async_worker.py            # Async queue and parallel processing
+│   └── __init__.py
+├── Dockerfile
+├── requirements.txt               # Runtime dependencies
+├── requirements-dev.txt           # Dev tools: pytest, ruff, mypy
+├── README.md                      # Documentation
+├── Makefile                       # Developer shortcuts (run, test, lint)
+└── .github/
+    └── workflows/
+        └── ci.yml                 # GitHub Actions for CI
+
 ```
 
 ## 📂 API Endpoints
