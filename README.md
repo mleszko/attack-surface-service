@@ -178,6 +178,9 @@ This project was designed with automated benchmarking and robustness tests in mi
 - [ ] Add lightweight `/ping` healthcheck endpoint
 - [ ] Document performance decisions and benchmarks in README
 
+## ⏱️ Development Time & Effort
+
+This solution was designed, built, optimized and documented over the course of approximately **10–12 hours**.
 
 ---
 Hiring Exercise
