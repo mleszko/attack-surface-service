@@ -84,5 +84,5 @@ class StatsTracker:
             return {
                 "vm_count": vm_count,
                 "request_count": self.request_count,
-                "average_request_time": round(avg_time, 9)
+                "average_request_time": round(avg_time, 3)
             }
