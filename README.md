@@ -34,7 +34,7 @@ export ENV_PATH=tests/cloud.json
 uvicorn main:app --host 0.0.0.0 --port 80
 ```
 
-Make sure `cloud.json` is in the same directory.
+Make sure `cloud.json` is in the app\tests directory.
 
 ## 📂 Project Structure
 ```
