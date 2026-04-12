@@ -45,10 +45,16 @@ async def test_worker_processes_successful_request() -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("mode", "expected_status"),
-    [("http_exception", 404), ("value_error", 404), ("unexpected", 500)],
+    ("mode", "expected_status", "expected_code"),
+    [
+        ("http_exception", 404, "vm_not_found"),
+        ("value_error", 404, "invalid_vm"),
+        ("unexpected", 500, "internal_error"),
+    ],
 )
-async def test_worker_maps_failures_to_status_codes(mode: str, expected_status: int) -> None:
+async def test_worker_maps_failures_to_status_codes(
+    mode: str, expected_status: int, expected_code: str
+) -> None:
     analyzer = FakeAnalyzer(mode=mode)
     worker = AttackWorker(analyzer, num_workers=1)
     await worker.start()
@@ -66,7 +72,8 @@ async def test_worker_maps_failures_to_status_codes(mode: str, expected_status: 
         await worker.stop()
 
     assert captured["status"] == expected_status
-    assert "error" in captured["payload"]
+    assert captured["payload"]["code"] == expected_code
+    assert "message" in captured["payload"]
 
 
 @pytest.mark.asyncio
@@ -86,4 +93,5 @@ async def test_worker_returns_429_when_queue_is_full() -> None:
     await worker.submit("vm-b", responder, timeout=0.01)
 
     assert captured["status"] == 429
-    assert captured["payload"]["error"] == "Server too busy. Try again later."
+    assert captured["payload"]["code"] == "too_busy"
+    assert captured["payload"]["message"] == "Server too busy. Try again later."
