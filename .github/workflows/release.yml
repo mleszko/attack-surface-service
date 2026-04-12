@@ -1,0 +1,29 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t attack-surface-service:${{ github.ref_name }} .
+
+      - name: Save image artifact
+        run: docker save attack-surface-service:${{ github.ref_name }} | gzip > attack-surface-service-image.tar.gz
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: attack-surface-service-image-${{ github.ref_name }}
+          path: attack-surface-service-image.tar.gz
