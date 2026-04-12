@@ -2,3 +2,10 @@
 .idea/workspace.xml
 .idea/misc.xml
 *.iml
+
+# Python runtime and tooling artifacts
+__pycache__/
+*.pyc
+service.log
+.pytest_cache/
+.mypy_cache/
