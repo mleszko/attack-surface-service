@@ -25,16 +25,17 @@ AI support was used to boost productivity and clarity — not to replace design 
 
 ### 2. Install dependencies
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 ### 3. Set environment variable and start the service
 ```bash
+cd app
 export ENV_PATH=tests/cloud.json
-uvicorn main:app --host 0.0.0.0 --port 80
+uvicorn attack_surface:app --host 0.0.0.0 --port 80
 ```
 
-Make sure `cloud.json` is in the app\tests directory.
+Make sure `cloud.json` is in the `app/tests` directory.
 
 ## 📂 Project Structure
 ```
@@ -100,7 +101,8 @@ curl 'http://localhost/api/v1/stats'
 ## 🧪 Testing
 Run unit tests using `pytest`:
 ```bash
-pytest test_attack_surface.py
+cd app
+pytest
 ```
 
 Run basic functional tests using `curl`:

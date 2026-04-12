@@ -28,7 +28,7 @@ async def test_attack_endpoint_under_load() -> None:
 @pytest.mark.asyncio
 async def test_attack_performance_with_large_env(monkeypatch) -> None:
     """Test single attack query performance with large input JSON."""
-    os.environ["ENV_PATH"] = "tests/resources/huge_env.json"
+    os.environ["ENV_PATH"] = "tests/huge_env.json"
 
     import importlib
     import attack_surface
