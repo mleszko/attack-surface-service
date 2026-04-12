@@ -43,3 +43,25 @@
 
 **Trade-off:**
 - Developers should use the dev requirements file for local work.
+
+## 5) Request ID propagation + unified error contract
+
+**Decision:** Attach an `X-Request-ID` to each response and include `request_id` in all error payloads.
+
+**Why:**
+- Makes troubleshooting easier across API gateway, logs, and client reports.
+- Keeps error handling consistent for frontend and integration consumers.
+
+**Trade-off:**
+- Slightly larger error payloads.
+
+## 6) Log format toggle (`LOG_FORMAT`)
+
+**Decision:** Support both text logs and JSON logs through an environment variable.
+
+**Why:**
+- Text output is friendly for local development.
+- JSON output is easier to parse in centralized logging systems.
+
+**Trade-off:**
+- Logging path includes lightweight formatting logic.
