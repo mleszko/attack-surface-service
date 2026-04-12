@@ -8,6 +8,10 @@ The project focuses on practical backend engineering concerns: deterministic beh
 
 - Computes attacker VM IDs for a target VM (`/api/v1/attack`)
 - Exposes runtime request metrics (`/api/v1/stats`)
+- Provides probe endpoints for orchestration (`/healthz`, `/readyz`)
+- Propagates `X-Request-ID` for tracing and debugging
+- Standardizes error responses with `{error: {code, message, request_id}}`
+- Supports structured logging with `LOG_FORMAT=json`
 - Validates and indexes environment data at startup for fast lookups
 - Uses bounded async queue + worker pool for backpressure handling
 - Includes unit, integration, and startup-failure test coverage
@@ -61,6 +65,12 @@ Returns:
 - `request_count`
 - `average_request_time`
 
+### `GET /healthz`
+Liveness endpoint for platform health checks.
+
+### `GET /readyz`
+Readiness endpoint that verifies analyzer/worker startup state.
+
 Response example:
 ```json
 {
@@ -69,6 +79,26 @@ Response example:
   "average_request_time": 0.002
 }
 ```
+
+### Error contract
+Error responses follow a single schema:
+
+```json
+{
+  "error": {
+    "code": "vm_not_found",
+    "message": "VM not found",
+    "request_id": "9cbc6eb4-069a-4f99-8a95-8e1bd3a5f767"
+  }
+}
+```
+
+## Runtime configuration
+
+Environment variables:
+
+- `ENV_PATH` (required): path to cloud environment JSON
+- `LOG_FORMAT` (optional): `text` (default) or `json`
 
 ## Engineering notes
 

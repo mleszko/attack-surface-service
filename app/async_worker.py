@@ -1,6 +1,7 @@
 import asyncio
 from asyncio import Task
-from typing import Dict, Any, Callable, List, Union
+from typing import Any, Callable, Dict, List, Union
+
 from fastapi import HTTPException
 
 
@@ -36,11 +37,11 @@ class AttackWorker:
                     attackers = await self.analyzer.get_attackers(vm_id)
                     await responder(list(attackers), 200)
                 except HTTPException as e:
-                    await responder({"error": str(e.detail)}, e.status_code)
+                    await responder({"code": "vm_not_found", "message": str(e.detail)}, e.status_code)
                 except ValueError as e:
-                    await responder({"error": str(e)}, 404)
+                    await responder({"code": "invalid_vm", "message": str(e)}, 404)
                 except Exception as e:
-                    await responder({"error": f"Unexpected: {e}"}, 500)
+                    await responder({"code": "internal_error", "message": f"Unexpected: {e}"}, 500)
                 finally:
                     self.queue.task_done()
             except asyncio.CancelledError:
@@ -51,4 +52,4 @@ class AttackWorker:
         try:
             await asyncio.wait_for(self.queue.put({"vm_id": vm_id, "responder": responder}), timeout=timeout)
         except asyncio.TimeoutError:
-            await responder({"error": "Server too busy. Try again later."}, 429)
+            await responder({"code": "too_busy", "message": "Server too busy. Try again later."}, 429)
