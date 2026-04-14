@@ -44,6 +44,28 @@
 **Trade-off:**
 - Developers should use the dev requirements file for local work.
 
+## 5) Explicit OpenAPI response examples
+
+**Decision:** Add examples for success and common failure responses directly in route metadata.
+
+**Why:**
+- Improves consumer onboarding and integration speed.
+- Keeps the runtime error contract and docs synchronized.
+
+**Trade-off:**
+- Requires maintaining examples when response shapes evolve.
+
+## 6) Deployment manifests in-repo
+
+**Decision:** Include baseline Docker Compose and Kubernetes manifests in source control.
+
+**Why:**
+- Makes local and cluster startup repeatable.
+- Demonstrates operational readiness in a portfolio context.
+
+**Trade-off:**
+- Manifests remain intentionally minimal and may need environment-specific tuning.
+
 ## 5) Request ID propagation + unified error contract
 
 **Decision:** Attach an `X-Request-ID` to each response and include `request_id` in all error payloads.

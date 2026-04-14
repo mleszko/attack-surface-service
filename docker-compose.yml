@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  attack-surface:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: attack-surface-service:local
+    container_name: attack-surface-service
+    restart: unless-stopped
+    environment:
+      ENV_PATH: tests/cloud.json
+      LOG_FORMAT: json
+    ports:
+      - "8000:80"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1/healthz', timeout=2).read()",
+        ]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 10s

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: attack-surface-service
+  labels:
+    app: attack-surface-service
+spec:
+  type: ClusterIP
+  selector:
+    app: attack-surface-service
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

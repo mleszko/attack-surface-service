@@ -36,6 +36,10 @@ The API is optimized for low-latency queries by building lookup indexes once at 
    - Validation and HTTP errors are normalized into a shared contract
    - Every error payload includes `request_id` for traceability
 
+6. **OpenAPI contract**
+   - Endpoints include explicit success/error response examples
+   - Probe endpoints are documented for platform integrations
+
 ## Core components
 
 - `models.py`
@@ -60,3 +64,5 @@ The API is optimized for low-latency queries by building lookup indexes once at 
   - Keep runtime lean and easy to deploy.
 - **Operational observability**
   - Request IDs + optional JSON logs for easier platform diagnostics.
+- **Deployment portability**
+  - First-class compose and Kubernetes manifests for reproducible runtime setup.

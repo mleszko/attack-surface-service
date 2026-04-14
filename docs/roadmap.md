@@ -7,7 +7,7 @@ This roadmap is focused on practical security engineering use cases.
 - [x] Add `/healthz` and `/readyz` endpoints for easier orchestration checks.
 - [x] Add structured JSON logging mode (toggle by environment variable).
 - [x] Standardize error payloads with request IDs.
-- [ ] Add OpenAPI response examples for common errors.
+- [x] Add OpenAPI response examples for common errors.
 
 ## v0.3.x
 
@@ -19,4 +19,5 @@ This roadmap is focused on practical security engineering use cases.
 
 - Add policy mode: fail CI when risky reachability patterns are detected.
 - Add a CLI wrapper for local/offline audits.
-- Provide Kubernetes deployment manifests and sample Helm chart values.
+- [x] Provide Kubernetes deployment manifests.
+- [ ] Add sample Helm chart values.

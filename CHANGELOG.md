@@ -13,6 +13,9 @@ The format is inspired by Keep a Changelog and follows semantic versioning inten
 - Request ID propagation via `X-Request-ID` middleware.
 - Standardized API error contract (`error.code`, `error.message`, `error.request_id`).
 - Optional structured JSON logging with `LOG_FORMAT=json`.
+- OpenAPI success/error examples for attack, stats, and probe endpoints.
+- Docker Compose runtime (`docker-compose.yml`) with healthcheck wiring.
+- Kubernetes manifests (`deploy/k8s`) with liveness/readiness probes.
 - Worker shutdown support and focused tests for queue/error behavior.
 - Startup-failure tests covering missing ENV, missing file, and invalid payload.
 - Coverage reporting and threshold enforcement in CI.
@@ -21,6 +24,7 @@ The format is inspired by Keep a Changelog and follows semantic versioning inten
 - Portfolio-focused documentation:
   - Architecture notes
   - Design decisions
+  - Deployment guide
   - Roadmap
   - Environment example
   - License

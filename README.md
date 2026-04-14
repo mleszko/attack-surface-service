@@ -12,6 +12,7 @@ The project focuses on practical backend engineering concerns: deterministic beh
 - Propagates `X-Request-ID` for tracing and debugging
 - Standardizes error responses with `{error: {code, message, request_id}}`
 - Supports structured logging with `LOG_FORMAT=json`
+- Documents OpenAPI response examples for success and error paths
 - Validates and indexes environment data at startup for fast lookups
 - Uses bounded async queue + worker pool for backpressure handling
 - Includes unit, integration, and startup-failure test coverage
@@ -48,6 +49,15 @@ Interactive API docs:
 docker build -t attack-surface-service .
 docker run --rm -p 8000:80 -e ENV_PATH=tests/cloud.json attack-surface-service
 ```
+
+## Run with Docker Compose
+
+```bash
+docker compose up --build
+```
+
+The compose setup exposes the API on `http://localhost:8000`, enables JSON logs,
+and uses `/healthz` for container health checks.
 
 ## API
 
@@ -93,6 +103,17 @@ Error responses follow a single schema:
 }
 ```
 
+### OpenAPI examples
+
+The API docs include explicit examples for:
+
+- success responses (`/api/v1/attack`, `/api/v1/stats`, `/healthz`, `/readyz`)
+- common error responses (`404`, `422`, `429`, `503`)
+
+See:
+- `http://localhost:8000/docs`
+- `http://localhost:8000/openapi.json`
+
 ## Runtime configuration
 
 Environment variables:
@@ -110,6 +131,7 @@ Environment variables:
 Detailed docs:
 - [Architecture](docs/architecture.md)
 - [Design decisions](docs/decisions.md)
+- [Deployment](docs/deployment.md)
 - [Roadmap](docs/roadmap.md)
 - [Changelog](CHANGELOG.md)
 
@@ -132,6 +154,19 @@ Current pipeline includes:
 
 - CI workflow: `.github/workflows/ci.yml`
 - Release workflow (tag-triggered image artifact build): `.github/workflows/release.yml`
+
+## Kubernetes
+
+Baseline manifests are provided in `deploy/k8s`:
+
+```bash
+kubectl apply -k deploy/k8s
+```
+
+They include:
+- deployment with `/healthz` and `/readyz` probes
+- ClusterIP service
+- kustomization entrypoint
 
 ## License
 

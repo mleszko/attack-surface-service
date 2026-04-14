@@ -6,7 +6,7 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any, AsyncIterator, Callable
+from typing import Any, AsyncIterator, Awaitable, Callable
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
@@ -19,6 +19,48 @@ from services import AttackSurfaceAnalyzer, StatsTracker
 
 logging.basicConfig(level=logging.INFO, format="%(message)s", handlers=[logging.StreamHandler()])
 logger = logging.getLogger("attack_surface")
+REQUEST_ID_HEADER = "X-Request-ID"
+
+REQUEST_ID_HEADER_DOC = {
+    REQUEST_ID_HEADER: {
+        "description": "Request correlation ID propagated by the service.",
+        "schema": {"type": "string"},
+    }
+}
+
+ATTACK_SUCCESS_EXAMPLE = ["vm-c"]
+STATS_SUCCESS_EXAMPLE = {"vm_count": 3, "request_count": 102, "average_request_time": 0.002}
+HEALTH_SUCCESS_EXAMPLE = {"status": "ok"}
+READY_SUCCESS_EXAMPLE = {"status": "ready", "vm_count": 3, "workers": 4, "queue_depth": 0}
+NOT_FOUND_ERROR_EXAMPLE = {
+    "error": {"code": "vm_not_found", "message": "VM not found", "request_id": "req-123"}
+}
+INVALID_REQUEST_ERROR_EXAMPLE = {
+    "error": {
+        "code": "invalid_request",
+        "message": "Request validation failed",
+        "request_id": "req-123",
+        "details": [
+            {"type": "missing", "loc": ["query", "vm_id"], "msg": "Field required", "input": None}
+        ],
+    }
+}
+TOO_BUSY_ERROR_EXAMPLE = {
+    "error": {"code": "too_busy", "message": "Server too busy. Try again later.", "request_id": "req-123"}
+}
+PROCESSING_TIMEOUT_ERROR_EXAMPLE = {
+    "error": {
+        "code": "processing_timeout",
+        "message": "Timed out while processing request",
+        "request_id": "req-123",
+    }
+}
+READY_NOT_READY_EXAMPLE = {
+    "error": {"code": "service_not_ready", "message": "Service is not ready", "request_id": "req-123"}
+}
+INTERNAL_ERROR_EXAMPLE = {
+    "error": {"code": "internal_error", "message": "Internal server error", "request_id": "req-123"}
+}
 
 
 def _emit_log(level: int, message: str, **fields: Any) -> None:
@@ -68,6 +110,14 @@ def _status_code_to_error_code(status_code: int) -> str:
     return mapping.get(status_code, "request_error")
 
 
+def _json_response_doc(description: str, example: Any) -> dict[str, Any]:
+    return {
+        "description": description,
+        "headers": REQUEST_ID_HEADER_DOC,
+        "content": {"application/json": {"example": example}},
+    }
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Load environment state and start worker lifecycle."""
@@ -112,13 +162,23 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await worker.stop()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="Cloud Attack Surface Analyzer",
+    description=(
+        "Compute potential attack paths between VMs based on tags and firewall rules. "
+        "Includes request tracing, readiness probes, and standardized error payloads."
+    ),
+    version="0.3.0",
+    lifespan=lifespan,
+)
 
 
 @app.middleware("http")
-async def attach_request_context(request: Request, call_next: Callable[[Request], Any]) -> Response:
+async def attach_request_context(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     """Attach request IDs and track per-request metrics."""
-    request_id = request.headers.get("X-Request-ID", "").strip() or str(uuid.uuid4())
+    request_id = request.headers.get(REQUEST_ID_HEADER, "").strip() or str(uuid.uuid4())
     request.state.request_id = request_id
     start_time = time.perf_counter()
     response = await call_next(request)
@@ -128,7 +188,7 @@ async def attach_request_context(request: Request, call_next: Callable[[Request]
     if stats is not None:
         stats.record_request(duration)
 
-    response.headers["X-Request-ID"] = request_id
+    response.headers[REQUEST_ID_HEADER] = request_id
     _emit_log(
         logging.INFO,
         "Request completed",
@@ -179,8 +239,28 @@ async def handle_unexpected_exception(request: Request, exc: Exception) -> JSONR
     )
 
 
-@app.get("/api/v1/attack")
-async def get_attack(request: Request, vm_id: str = Query(..., min_length=1, max_length=64)) -> JSONResponse:
+@app.get(
+    "/api/v1/attack",
+    summary="Compute attackers for a target VM",
+    responses={
+        200: _json_response_doc("Unique attacker VM IDs.", ATTACK_SUCCESS_EXAMPLE),
+        404: _json_response_doc("Target VM does not exist.", NOT_FOUND_ERROR_EXAMPLE),
+        422: _json_response_doc("Invalid request parameters.", INVALID_REQUEST_ERROR_EXAMPLE),
+        429: _json_response_doc("Queue is saturated and cannot accept more work.", TOO_BUSY_ERROR_EXAMPLE),
+        500: _json_response_doc("Unexpected internal error.", INTERNAL_ERROR_EXAMPLE),
+        503: _json_response_doc("Worker processing timed out or service not yet ready.", PROCESSING_TIMEOUT_ERROR_EXAMPLE),
+    },
+)
+async def get_attack(
+    request: Request,
+    vm_id: str = Query(
+        ...,
+        min_length=1,
+        max_length=64,
+        description="Target virtual machine identifier.",
+        examples=["vm-a"],
+    ),
+) -> JSONResponse:
     """Queue the attack surface request to be processed asynchronously."""
     result: Any = []
     status_code = 200
@@ -206,13 +286,24 @@ async def get_attack(request: Request, vm_id: str = Query(..., min_length=1, max
     return JSONResponse(result)
 
 
-@app.get("/healthz")
+@app.get(
+    "/healthz",
+    summary="Liveness probe",
+    responses={200: _json_response_doc("Service process is alive.", HEALTH_SUCCESS_EXAMPLE)},
+)
 def healthz() -> dict[str, str]:
     """Simple liveness endpoint."""
     return {"status": "ok"}
 
 
-@app.get("/readyz")
+@app.get(
+    "/readyz",
+    summary="Readiness probe",
+    responses={
+        200: _json_response_doc("Service is ready to serve traffic.", READY_SUCCESS_EXAMPLE),
+        503: _json_response_doc("Service dependencies are not initialized.", READY_NOT_READY_EXAMPLE),
+    },
+)
 def readyz(request: Request) -> dict[str, Any]:
     """Readiness endpoint checking that runtime dependencies are initialized."""
     analyzer = getattr(request.app.state, "analyzer", None)
@@ -231,7 +322,11 @@ def readyz(request: Request) -> dict[str, Any]:
     }
 
 
-@app.get("/api/v1/stats")
+@app.get(
+    "/api/v1/stats",
+    summary="Return runtime request statistics",
+    responses={200: _json_response_doc("Current runtime request statistics.", STATS_SUCCESS_EXAMPLE)},
+)
 def get_stats(request: Request) -> dict[str, Any]:
     """Return runtime statistics for requests and loaded VM count."""
     stats = request.app.state.stats
