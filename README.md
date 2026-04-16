@@ -8,6 +8,11 @@ The project focuses on practical backend engineering concerns: deterministic beh
 
 - Computes attacker VM IDs for a target VM (`/api/v1/attack`)
 - Exposes runtime request metrics (`/api/v1/stats`)
+- Provides probe endpoints for orchestration (`/healthz`, `/readyz`)
+- Propagates `X-Request-ID` for tracing and debugging
+- Standardizes error responses with `{error: {code, message, request_id}}`
+- Supports structured logging with `LOG_FORMAT=json`
+- Documents OpenAPI response examples for success and error paths
 - Validates and indexes environment data at startup for fast lookups
 - Uses bounded async queue + worker pool for backpressure handling
 - Includes unit, integration, and startup-failure test coverage
@@ -45,6 +50,15 @@ docker build -t attack-surface-service .
 docker run --rm -p 8000:80 -e ENV_PATH=tests/cloud.json attack-surface-service
 ```
 
+## Run with Docker Compose
+
+```bash
+docker compose up --build
+```
+
+The compose setup exposes the API on `http://localhost:8000`, enables JSON logs,
+and uses `/healthz` for container health checks.
+
 ## API
 
 ### `GET /api/v1/attack?vm_id=<vm-id>`
@@ -61,6 +75,12 @@ Returns:
 - `request_count`
 - `average_request_time`
 
+### `GET /healthz`
+Liveness endpoint for platform health checks.
+
+### `GET /readyz`
+Readiness endpoint that verifies analyzer/worker startup state.
+
 Response example:
 ```json
 {
@@ -69,6 +89,37 @@ Response example:
   "average_request_time": 0.002
 }
 ```
+
+### Error contract
+Error responses follow a single schema:
+
+```json
+{
+  "error": {
+    "code": "vm_not_found",
+    "message": "VM not found",
+    "request_id": "9cbc6eb4-069a-4f99-8a95-8e1bd3a5f767"
+  }
+}
+```
+
+### OpenAPI examples
+
+The API docs include explicit examples for:
+
+- success responses (`/api/v1/attack`, `/api/v1/stats`, `/healthz`, `/readyz`)
+- common error responses (`404`, `422`, `429`, `503`)
+
+See:
+- `http://localhost:8000/docs`
+- `http://localhost:8000/openapi.json`
+
+## Runtime configuration
+
+Environment variables:
+
+- `ENV_PATH` (required): path to cloud environment JSON
+- `LOG_FORMAT` (optional): `text` (default) or `json`
 
 ## Engineering notes
 
@@ -80,6 +131,7 @@ Response example:
 Detailed docs:
 - [Architecture](docs/architecture.md)
 - [Design decisions](docs/decisions.md)
+- [Deployment](docs/deployment.md)
 - [Roadmap](docs/roadmap.md)
 - [Changelog](CHANGELOG.md)
 
@@ -102,6 +154,19 @@ Current pipeline includes:
 
 - CI workflow: `.github/workflows/ci.yml`
 - Release workflow (tag-triggered image artifact build): `.github/workflows/release.yml`
+
+## Kubernetes
+
+Baseline manifests are provided in `deploy/k8s`:
+
+```bash
+kubectl apply -k deploy/k8s
+```
+
+They include:
+- deployment with `/healthz` and `/readyz` probes
+- ClusterIP service
+- kustomization entrypoint
 
 ## License
 
